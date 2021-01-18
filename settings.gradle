@@ -1,0 +1,3 @@
+include ':DownloadManagerCore'
+include ':app'
+rootProject.name = "Download Manager"

@@ -1,0 +1,34 @@
+package com.kunalkalra.downloadmanagercore.network
+
+import com.kunalkalra.downloadmanagercore.utils.logDebug
+import com.kunalkalra.downloadmanagercore.utils.logException
+import kotlinx.coroutines.*
+import okhttp3.*
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
+
+class NetworkManager {
+
+    private val okHttpClient: OkHttpClient by lazy {
+        OkHttpClient()
+    }
+
+    suspend fun requestResource(coroutineContext: CoroutineContext = Dispatchers.IO, request: Request): SafeResult<Response> {
+        return withContext(coroutineContext) {
+            logDebug(Thread.currentThread().name)
+            suspendCancellableCoroutine { cancellableContinuation ->
+                okHttpClient.newCall(request).enqueue(object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        logException(e)
+                        cancellableContinuation.resume(SafeResult.Failure(e, e.message))
+                    }
+
+                    override fun onResponse(call: Call, response: Response) {
+                        cancellableContinuation.resume(SafeResult.Success(response))
+                    }
+                })
+            }
+        }
+    }
+}

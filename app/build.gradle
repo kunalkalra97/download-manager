@@ -60,6 +60,12 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
 
+    // OkHttp
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
+
+    // Okio
+    implementation("com.squareup.okio:okio:2.10.0")
+
     // Room
     implementation "androidx.room:room-runtime:2.2.6"
     kapt "androidx.room:room-compiler:2.2.6"

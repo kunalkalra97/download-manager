@@ -102,14 +102,12 @@ class CoreDownloadService : Service() {
         val request = Request.Builder()
             .url(url)
             .build()
-        logDebug("downloadInternal 1: ${Thread.currentThread().name}")
         when (val response = networkManager.requestResource(request = request)) {
             is SafeResult.Success -> {
                 response.data?.let { safeResponse ->
                     when (val mimeType = MimeUtils.getExtensionFromResponse(safeResponse)) {
                         null -> throw MimeTypeNotDetermined()
                         else -> {
-                            logDebug("downloadInternal 2: ${Thread.currentThread().name}")
                             val completePath = this@downloadInternal.getCompleteFilePath(mimeType)
                             val file = fileManager.createFile(completePath)
                             file?.let { safeFile ->

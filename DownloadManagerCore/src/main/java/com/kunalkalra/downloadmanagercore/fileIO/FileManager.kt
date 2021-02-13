@@ -1,9 +1,7 @@
 package com.kunalkalra.downloadmanagercore.fileIO
 
-import com.kunalkalra.downloadmanagercore.utils.logDebug
 import com.kunalkalra.downloadmanagercore.utils.logException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.kunalkalra.downloadmanagercore.utils.withIOContext
 import okhttp3.ResponseBody
 import okio.FileNotFoundException
 import okio.IOException
@@ -14,8 +12,7 @@ import java.io.File
 class FileManager: IFileOperations {
 
     override suspend fun createFile(path: String): File? {
-        return withContext(Dispatchers.IO) {
-            logDebug("createFile 1: ${Thread.currentThread().name}")
+        return withIOContext {
             val file = File(path)
             try {
                 file.createNewFile()
@@ -31,16 +28,14 @@ class FileManager: IFileOperations {
     }
 
     override suspend fun writeToFile(file: File, body: ResponseBody?) {
-        return withContext(Dispatchers.IO) {
+        withIOContext {
             try {
-                logDebug("write To File 1: ${Thread.currentThread().name}")
                 val bufferedSink = file.sink().buffer()
                 body?.let { safeResponseBody ->
                     val safeSource = safeResponseBody.source()
                     bufferedSink.writeAll(safeSource)
                 }
                 bufferedSink.close()
-                logDebug("Written to file with path -- ${file.path}")
             } catch (e: FileNotFoundException) {
                 logException(e)
             } catch (e: IOException) {

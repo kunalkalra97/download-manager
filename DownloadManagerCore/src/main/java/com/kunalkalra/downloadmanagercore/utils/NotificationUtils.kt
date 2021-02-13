@@ -61,7 +61,6 @@ object NotificationUtils {
     }
 
     private fun getActionFor(state: DownloadState, context: Context): NotificationCompat.Action {
-        logDebug("Notification Thread: ${Thread.currentThread().name}")
         return when(state) {
             DownloadState.Resume -> {
                 NotificationCompat.Action.Builder(

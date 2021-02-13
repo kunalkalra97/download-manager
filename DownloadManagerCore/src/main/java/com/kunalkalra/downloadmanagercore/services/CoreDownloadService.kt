@@ -15,11 +15,13 @@ import com.kunalkalra.downloadmanagercore.Actions.STOP_DOWNLOAD_ACTION
 import com.kunalkalra.downloadmanagercore.HeaderConstants
 import com.kunalkalra.downloadmanagercore.IntentConstants
 import com.kunalkalra.downloadmanagercore.downloadManager.DownloadState
+import com.kunalkalra.downloadmanagercore.downloadManager.exceptions.MimeTypeNotDetermined
 import com.kunalkalra.downloadmanagercore.fileIO.FileManager
-import com.kunalkalra.downloadmanagercore.models.CoreDownloadJobStatus
-import com.kunalkalra.downloadmanagercore.models.CoreDownloadRequest
-import com.kunalkalra.downloadmanagercore.network.NetworkManager
-import com.kunalkalra.downloadmanagercore.network.SafeResult
+import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadJobStatus
+import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadRequest
+import com.kunalkalra.downloadmanagercore.network.OkHttpsNetworkManager
+import com.kunalkalra.downloadmanagercore.network.models.SafeResult
+import com.kunalkalra.downloadmanagercore.utils.MimeUtils
 import com.kunalkalra.downloadmanagercore.utils.NotificationUtils
 import com.kunalkalra.downloadmanagercore.utils.logDebug
 import kotlinx.coroutines.*
@@ -30,10 +32,10 @@ class CoreDownloadService : Service() {
 
     private var downloadServiceScope = MainScope()
 
-    private val networkManager by lazy { NetworkManager() }
+    private val networkManager by lazy { OkHttpsNetworkManager() }
     private val fileManager by lazy { FileManager() }
 
-    private var allDownloadsJobStatus = mutableListOf<CoreDownloadJobStatus>()
+    private var allDownloadsJobStatuses = mutableListOf<CoreDownloadJobStatus>()
 
     private val actionBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -57,16 +59,22 @@ class CoreDownloadService : Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        val coreDownloadRequest = intent.getParcelableExtra<CoreDownloadRequest>(IntentConstants.INTENT_DOWNLOAD)
+        val coreDownloadRequest =
+            intent.getParcelableExtra<CoreDownloadRequest>(IntentConstants.INTENT_DOWNLOAD)
         coreDownloadRequest?.let { safeCoreDownloadRequest ->
-            val coreDownloadJobStatus = CoreDownloadJobStatus(
-                    job = safeCoreDownloadRequest.downloadInternal(),
+            try {
+                val coreDownloadJobStatus = CoreDownloadJobStatus(
+                    job = downloadServiceScope.launch { safeCoreDownloadRequest.downloadInternal() },
                     downloadRequest = safeCoreDownloadRequest,
                     downloadState = DownloadState.Start,
                     notificationId = safeCoreDownloadRequest.id
-            )
-            allDownloadsJobStatus.add(coreDownloadJobStatus)
-            updateNotification(coreDownloadJobStatus)
+                )
+                allDownloadsJobStatuses.add(coreDownloadJobStatus)
+                updateNotification(coreDownloadJobStatus)
+            } catch (e: MimeTypeNotDetermined) {
+                logDebug(e.message)
+            }
+
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -82,35 +90,38 @@ class CoreDownloadService : Service() {
             }
 
             else -> {
-                // Todo("Don't do anything else for now")
+                // Todo("Create other states")
                 NotificationUtils.getDownloadStartNotification(this, downloadJobStatus.downloadRequest)
             }
         }
         NotificationManagerCompat.from(this).notify(downloadJobStatus.notificationId, notification)
     }
 
-    private fun CoreDownloadRequest.downloadInternal(): Job {
+    @Throws(MimeTypeNotDetermined::class)
+    private suspend fun CoreDownloadRequest.downloadInternal() {
         val request = Request.Builder()
-                .url(url)
-                .build()
-
-        return downloadServiceScope.launch {
-            logDebug(Thread.currentThread().name)
-            when (val result = networkManager.requestResource(request = request)) {
-                is SafeResult.Success -> {
-                    result.data?.let { response ->
-                        val mimeType = MimeTypeMap.getSingleton().getExtensionFromMimeType(response.headers.toMultimap()[HeaderConstants.CONTENT_TYPE]?.get(0))
-                        val completePath = this@downloadInternal.getCompleteFilePath(mimeType!!)
-                        val file = fileManager.createFile(completePath)
-                        file?.let { safeFile ->
-                            fileManager.writeToFile(safeFile, response.body)
+            .url(url)
+            .build()
+        logDebug("downloadInternal 1: ${Thread.currentThread().name}")
+        when (val response = networkManager.requestResource(request = request)) {
+            is SafeResult.Success -> {
+                response.data?.let { safeResponse ->
+                    when (val mimeType = MimeUtils.getExtensionFromResponse(safeResponse)) {
+                        null -> throw MimeTypeNotDetermined()
+                        else -> {
+                            logDebug("downloadInternal 2: ${Thread.currentThread().name}")
+                            val completePath = this@downloadInternal.getCompleteFilePath(mimeType)
+                            val file = fileManager.createFile(completePath)
+                            file?.let { safeFile ->
+                                fileManager.writeToFile(safeFile, safeResponse.body)
+                            }
                         }
                     }
                 }
+            }
 
-                is SafeResult.Failure -> {
-                    logDebug("Could not fetch Resource from remote")
-                }
+            is SafeResult.Failure -> {
+                logDebug("Could not fetch Resource from remote")
             }
         }
 

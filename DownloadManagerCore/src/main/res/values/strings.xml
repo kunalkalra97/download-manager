@@ -4,4 +4,6 @@
     <string name="label_resume">Resume</string>
     <string name="label_pause">Pause</string>
     <string name="label_start">Start</string>
+
+    <string name="label_download_complete">Download Complete</string>
 </resources>

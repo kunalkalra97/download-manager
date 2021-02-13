@@ -6,7 +6,7 @@ import android.content.Intent
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.P
 import com.kunalkalra.downloadmanagercore.IntentConstants.INTENT_DOWNLOAD
-import com.kunalkalra.downloadmanagercore.models.CoreDownloadRequest
+import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadRequest
 import com.kunalkalra.downloadmanagercore.services.CoreDownloadService
 import com.kunalkalra.downloadmanagercore.utils.NotificationUtils
 import com.kunalkalra.downloadmanagercore.utils.PermissionUtils.validatePermissions

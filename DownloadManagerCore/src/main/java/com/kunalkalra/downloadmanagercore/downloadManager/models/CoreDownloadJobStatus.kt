@@ -1,4 +1,4 @@
-package com.kunalkalra.downloadmanagercore.models
+package com.kunalkalra.downloadmanagercore.downloadManager.models
 
 import com.kunalkalra.downloadmanagercore.downloadManager.DownloadState
 import kotlinx.coroutines.Job

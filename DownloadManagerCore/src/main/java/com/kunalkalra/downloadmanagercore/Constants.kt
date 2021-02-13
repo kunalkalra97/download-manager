@@ -28,6 +28,6 @@ object NotificationConstants {
 object Actions {
     const val START_DOWNLOAD_ACTION = "com.kunalkalra.downloadmanagercore.start_action"
     const val PAUSE_DOWNLOAD_ACTION = "com.kunalkalra.downloadmanagercore.pause_action"
-    const val RESUME_DOWNLOAD_ACTION = "com.kunalkalra.downloadmanagercore.start_resume"
-    const val STOP_DOWNLOAD_ACTION = "com.kunalkalra.downloadmanagercore.start_stop"
+    const val RESUME_DOWNLOAD_ACTION = "com.kunalkalra.downloadmanagercore.resume_action"
+    const val STOP_DOWNLOAD_ACTION = "com.kunalkalra.downloadmanagercore.stop_action"
 }

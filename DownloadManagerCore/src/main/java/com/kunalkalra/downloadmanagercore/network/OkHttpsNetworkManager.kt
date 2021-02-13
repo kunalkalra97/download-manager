@@ -1,5 +1,6 @@
 package com.kunalkalra.downloadmanagercore.network
 
+import com.kunalkalra.downloadmanagercore.network.models.SafeResult
 import com.kunalkalra.downloadmanagercore.utils.logDebug
 import com.kunalkalra.downloadmanagercore.utils.logException
 import kotlinx.coroutines.*
@@ -8,15 +9,15 @@ import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 
-class NetworkManager {
+class OkHttpsNetworkManager: INetworkOperations<Request, Response> {
 
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient()
     }
 
-    suspend fun requestResource(coroutineContext: CoroutineContext = Dispatchers.IO, request: Request): SafeResult<Response> {
+    override suspend fun requestResource(coroutineContext: CoroutineContext, request: Request): SafeResult<Response> {
         return withContext(coroutineContext) {
-            logDebug(Thread.currentThread().name)
+            logDebug("Network Call Thread: - ${Thread.currentThread().name}")
             suspendCancellableCoroutine { cancellableContinuation ->
                 okHttpClient.newCall(request).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {

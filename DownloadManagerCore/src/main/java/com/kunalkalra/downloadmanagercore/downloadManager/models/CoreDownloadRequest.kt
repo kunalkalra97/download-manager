@@ -1,4 +1,4 @@
-package com.kunalkalra.downloadmanagercore.models
+package com.kunalkalra.downloadmanagercore.downloadManager.models
 
 import android.os.Environment
 import android.os.Parcelable

@@ -1,6 +1,6 @@
 package com.kunalkalra.downloadmanagercore.downloadManager
 
-import com.kunalkalra.downloadmanagercore.models.CoreDownloadRequest
+import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadRequest
 
 interface IDownloadManger {
 

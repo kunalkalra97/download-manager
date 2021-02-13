@@ -13,7 +13,7 @@ import com.kunalkalra.downloadmanagercore.NotificationConstants.DEFAULT_NOTIFICA
 import com.kunalkalra.downloadmanagercore.NotificationConstants.DEFAULT_NOTIFICATION_CHANNEL_NAME
 import com.kunalkalra.downloadmanagercore.R
 import com.kunalkalra.downloadmanagercore.downloadManager.DownloadState
-import com.kunalkalra.downloadmanagercore.models.CoreDownloadRequest
+import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadRequest
 import kotlin.random.Random
 
 object NotificationUtils {
@@ -22,6 +22,17 @@ object NotificationUtils {
         return NotificationCompat.Builder(context, DEFAULT_NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_download)
             .setContentTitle(coreDownloadRequest.fileName)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .addAction(getActionFor(DownloadState.Pause, context))
+            .addAction(getActionFor(DownloadState.Stop, context))
+            .build()
+    }
+
+    fun getDownloadCompleteNotification(context: Context, coreDownloadRequest: CoreDownloadRequest): Notification {
+        return NotificationCompat.Builder(context, DEFAULT_NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_download)
+            .setContentTitle(coreDownloadRequest.fileName)
+            .setContentText(context.getString(R.string.label_download_complete))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .addAction(getActionFor(DownloadState.Pause, context))
             .addAction(getActionFor(DownloadState.Stop, context))
@@ -50,6 +61,7 @@ object NotificationUtils {
     }
 
     private fun getActionFor(state: DownloadState, context: Context): NotificationCompat.Action {
+        logDebug("Notification Thread: ${Thread.currentThread().name}")
         return when(state) {
             DownloadState.Resume -> {
                 NotificationCompat.Action.Builder(

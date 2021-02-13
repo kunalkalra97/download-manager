@@ -11,6 +11,7 @@ import com.kunalkalra.downloadmanagercore.Actions
 import com.kunalkalra.downloadmanagercore.NotificationConstants.DEFAULT_NOTIFICATION_CHANNEL_DESCRIPTION
 import com.kunalkalra.downloadmanagercore.NotificationConstants.DEFAULT_NOTIFICATION_CHANNEL_ID
 import com.kunalkalra.downloadmanagercore.NotificationConstants.DEFAULT_NOTIFICATION_CHANNEL_NAME
+import com.kunalkalra.downloadmanagercore.NotificationConstants.NOTIFICATION_ID
 import com.kunalkalra.downloadmanagercore.R
 import com.kunalkalra.downloadmanagercore.downloadManager.DownloadState
 import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadRequest
@@ -18,24 +19,33 @@ import kotlin.random.Random
 
 object NotificationUtils {
 
-    fun getDownloadStartNotification(context: Context, coreDownloadRequest: CoreDownloadRequest): Notification {
+    fun getDownloadStartNotification(
+        context: Context,
+        coreDownloadRequest: CoreDownloadRequest
+    ): Notification {
         return NotificationCompat.Builder(context, DEFAULT_NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_download)
             .setContentTitle(coreDownloadRequest.fileName)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .addAction(getActionFor(DownloadState.Pause, context))
-            .addAction(getActionFor(DownloadState.Stop, context))
+            .addAction(
+                getActionFor(
+                    NotificationAction.ActionPause(coreDownloadRequest.id),
+                    context
+                )
+            )
+            .addAction(getActionFor(NotificationAction.ActionStop(coreDownloadRequest.id), context))
             .build()
     }
 
-    fun getDownloadCompleteNotification(context: Context, coreDownloadRequest: CoreDownloadRequest): Notification {
+    fun getDownloadCompleteNotification(
+        context: Context,
+        coreDownloadRequest: CoreDownloadRequest
+    ): Notification {
         return NotificationCompat.Builder(context, DEFAULT_NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_download)
             .setContentTitle(coreDownloadRequest.fileName)
             .setContentText(context.getString(R.string.label_download_complete))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .addAction(getActionFor(DownloadState.Pause, context))
-            .addAction(getActionFor(DownloadState.Stop, context))
             .build()
     }
 
@@ -60,54 +70,62 @@ object NotificationUtils {
         )
     }
 
-    private fun getActionFor(state: DownloadState, context: Context): NotificationCompat.Action {
-        return when(state) {
-            DownloadState.Resume -> {
+    private fun getActionFor(
+        notificationAction: NotificationAction,
+        context: Context
+    ): NotificationCompat.Action {
+        return when (notificationAction) {
+            is NotificationAction.ActionResume -> {
                 NotificationCompat.Action.Builder(
-                    R.drawable.ic_play, context.getString(R.string.label_resume), getPendingIntent(state, context)
+                    R.drawable.ic_play,
+                    context.getString(R.string.label_resume),
+                    getPendingIntent(notificationAction, context)
                 ).build()
             }
 
-            DownloadState.Start -> {
+            is NotificationAction.ActionPause -> {
                 NotificationCompat.Action.Builder(
-                    R.drawable.ic_play, context.getString(R.string.label_start), getPendingIntent(state, context)
+                    R.drawable.ic_pause,
+                    context.getString(R.string.label_pause),
+                    getPendingIntent(notificationAction, context)
                 ).build()
             }
 
-            DownloadState.Pause -> {
+            is NotificationAction.ActionStop -> {
                 NotificationCompat.Action.Builder(
-                    R.drawable.ic_pause, context.getString(R.string.label_pause), getPendingIntent(state, context)
-                ).build()
-            }
-
-            DownloadState.Stop -> {
-                NotificationCompat.Action.Builder(
-                    R.drawable.ic_stop, context.getString(R.string.label_cancel), getPendingIntent(state, context)
+                    R.drawable.ic_stop,
+                    context.getString(R.string.label_cancel),
+                    getPendingIntent(notificationAction, context)
                 ).build()
             }
         }
 
     }
 
-    private fun getPendingIntent(state: DownloadState, context: Context): PendingIntent {
-        val intent = when(state) {
-            DownloadState.Resume -> {
-               Intent(Actions.RESUME_DOWNLOAD_ACTION)
+    private fun getPendingIntent(
+        notificationAction: NotificationAction,
+        context: Context
+    ): PendingIntent {
+        val intent = when (notificationAction) {
+            is NotificationAction.ActionResume -> {
+                Intent(Actions.RESUME_DOWNLOAD_ACTION)
             }
 
-            DownloadState.Start -> {
-                Intent(Actions.START_DOWNLOAD_ACTION)
-            }
-
-            DownloadState.Pause -> {
-                Intent(Actions.PAUSE_DOWNLOAD_ACTION)
-            }
-
-            DownloadState.Stop -> {
+            is NotificationAction.ActionStop -> {
                 Intent(Actions.STOP_DOWNLOAD_ACTION)
             }
-        }
+
+            is NotificationAction.ActionPause -> {
+                Intent(Actions.PAUSE_DOWNLOAD_ACTION)
+            }
+        }.putExtra(NOTIFICATION_ID, notificationAction.notificationID)
         return PendingIntent.getBroadcast(context, Random.nextInt(), intent, 0)
+    }
+
+    sealed class NotificationAction(val notificationID: Int) {
+        class ActionPause(notificationId: Int) : NotificationAction(notificationId)
+        class ActionStop(notificationId: Int) : NotificationAction(notificationId)
+        class ActionResume(notificationId: Int) : NotificationAction(notificationId)
     }
 
 }

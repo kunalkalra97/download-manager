@@ -23,6 +23,7 @@ object NotificationConstants {
     const val DEFAULT_NOTIFICATION_CHANNEL_ID = "com.kunalkalra.downloadmanagercore-notificationChanel"
     const val DEFAULT_NOTIFICATION_CHANNEL_NAME = "CORE_DOWNLOAD_MANAGER_CHANNEL"
     const val DEFAULT_NOTIFICATION_CHANNEL_DESCRIPTION = "Core Download Manager Notification Channel"
+    const val NOTIFICATION_ID = "NOTIFICATION_ID"
 }
 
 object Actions {

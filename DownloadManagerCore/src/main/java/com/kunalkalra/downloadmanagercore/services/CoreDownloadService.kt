@@ -14,6 +14,7 @@ import com.kunalkalra.downloadmanagercore.Actions.START_DOWNLOAD_ACTION
 import com.kunalkalra.downloadmanagercore.Actions.STOP_DOWNLOAD_ACTION
 import com.kunalkalra.downloadmanagercore.HeaderConstants
 import com.kunalkalra.downloadmanagercore.IntentConstants
+import com.kunalkalra.downloadmanagercore.NotificationConstants.NOTIFICATION_ID
 import com.kunalkalra.downloadmanagercore.downloadManager.DownloadState
 import com.kunalkalra.downloadmanagercore.downloadManager.exceptions.MimeTypeNotDetermined
 import com.kunalkalra.downloadmanagercore.fileIO.FileManager
@@ -40,6 +41,7 @@ class CoreDownloadService : Service() {
     private val actionBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             logDebug(intent?.action)
+            logDebug(intent?.getIntExtra(NOTIFICATION_ID, 0)?.toString())
         }
     }
 
@@ -63,6 +65,7 @@ class CoreDownloadService : Service() {
             intent.getParcelableExtra<CoreDownloadRequest>(IntentConstants.INTENT_DOWNLOAD)
         coreDownloadRequest?.let { safeCoreDownloadRequest ->
             try {
+                logDebug("Download request id: ${safeCoreDownloadRequest.id}")
                 val coreDownloadJobStatus = CoreDownloadJobStatus(
                     job = downloadServiceScope.launch { safeCoreDownloadRequest.downloadInternal() },
                     downloadRequest = safeCoreDownloadRequest,

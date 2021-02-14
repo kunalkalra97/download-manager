@@ -57,25 +57,28 @@ class CoreDownloadService : Service() {
         super.onDestroy()
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        val coreDownloadRequest =
-            intent.getParcelableExtra<CoreDownloadRequest>(IntentConstants.INTENT_DOWNLOAD)
-        coreDownloadRequest?.let { safeCoreDownloadRequest ->
-            try {
-                val coreDownloadJobStatus = CoreDownloadJobStatus(
-                    job = downloadServiceScope.launch { safeCoreDownloadRequest.downloadInternal() },
-                    downloadRequest = safeCoreDownloadRequest,
-                    downloadState = DownloadState.Start,
-                    notificationId = safeCoreDownloadRequest.id
-                )
-                allDownloadsJobStatuses[coreDownloadJobStatus.notificationId] =
-                    coreDownloadJobStatus
-                handleNotificationUpdates(coreDownloadJobStatus)
-            } catch (e: MimeTypeNotDetermined) {
-                logDebug(e.message)
-            }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        intent?.let { safeIntent ->
+            val coreDownloadRequest =
+                safeIntent.getParcelableExtra<CoreDownloadRequest>(IntentConstants.INTENT_DOWNLOAD)
+            coreDownloadRequest?.let { safeCoreDownloadRequest ->
+                try {
+                    val coreDownloadJobStatus = CoreDownloadJobStatus(
+                        job = downloadServiceScope.launch { safeCoreDownloadRequest.downloadInternal() },
+                        downloadRequest = safeCoreDownloadRequest,
+                        downloadState = DownloadState.Start,
+                        notificationId = safeCoreDownloadRequest.id
+                    )
+                    allDownloadsJobStatuses[coreDownloadJobStatus.notificationId] =
+                        coreDownloadJobStatus
+                    handleNotificationUpdates(coreDownloadJobStatus)
+                } catch (e: MimeTypeNotDetermined) {
+                    logDebug(e.message)
+                }
 
+            }
         }
+        // Todo: Check for restarting service
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -152,7 +155,7 @@ class CoreDownloadService : Service() {
                         else -> {
                             this.updateCompleteFilePathWithMimeType(mimeType)
                             val completePath = this.completeFilePath
-                            completePath?.let { safeCompletePath ->
+                            completePath?.let { safeComipletePath ->
                                 val file = fileManager.createFile(safeCompletePath)
                                 file?.let { safeFile ->
                                     fileManager.writeToFile(safeFile, safeResponse.body)

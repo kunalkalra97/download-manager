@@ -15,15 +15,12 @@ object IntentConstants {
     const val INTENT_DESTINATION_DIRECTORY = "INTENT_DESTINATION_DIRECTORY"
 }
 
-object ExtraConstants {
-    const val EXTRA_DOWNLOAD_ID = "EXTRA_DOWNLOAD_ID"
-}
 
 object NotificationConstants {
     const val DEFAULT_NOTIFICATION_CHANNEL_ID = "com.kunalkalra.downloadmanagercore-notificationChanel"
     const val DEFAULT_NOTIFICATION_CHANNEL_NAME = "CORE_DOWNLOAD_MANAGER_CHANNEL"
     const val DEFAULT_NOTIFICATION_CHANNEL_DESCRIPTION = "Core Download Manager Notification Channel"
-    const val NOTIFICATION_ID = "NOTIFICATION_ID"
+    const val DOWNLOAD_ID = "DOWNLOAD_ID"
 }
 
 object Actions {

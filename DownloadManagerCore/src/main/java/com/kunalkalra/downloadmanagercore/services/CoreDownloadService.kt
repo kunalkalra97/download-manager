@@ -6,15 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.IBinder
-import android.webkit.MimeTypeMap
 import androidx.core.app.NotificationManagerCompat
 import com.kunalkalra.downloadmanagercore.Actions.PAUSE_DOWNLOAD_ACTION
 import com.kunalkalra.downloadmanagercore.Actions.RESUME_DOWNLOAD_ACTION
 import com.kunalkalra.downloadmanagercore.Actions.START_DOWNLOAD_ACTION
 import com.kunalkalra.downloadmanagercore.Actions.STOP_DOWNLOAD_ACTION
-import com.kunalkalra.downloadmanagercore.HeaderConstants
 import com.kunalkalra.downloadmanagercore.IntentConstants
-import com.kunalkalra.downloadmanagercore.NotificationConstants.NOTIFICATION_ID
+import com.kunalkalra.downloadmanagercore.NotificationConstants.DOWNLOAD_ID
 import com.kunalkalra.downloadmanagercore.downloadManager.DownloadState
 import com.kunalkalra.downloadmanagercore.downloadManager.exceptions.MimeTypeNotDetermined
 import com.kunalkalra.downloadmanagercore.fileIO.FileManager
@@ -41,7 +39,7 @@ class CoreDownloadService : Service() {
     private val actionBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             logDebug(intent?.action)
-            logDebug(intent?.getIntExtra(NOTIFICATION_ID, 0)?.toString())
+            logDebug(intent?.getIntExtra(DOWNLOAD_ID, 0)?.toString())
         }
     }
 
@@ -65,7 +63,6 @@ class CoreDownloadService : Service() {
             intent.getParcelableExtra<CoreDownloadRequest>(IntentConstants.INTENT_DOWNLOAD)
         coreDownloadRequest?.let { safeCoreDownloadRequest ->
             try {
-                logDebug("Download request id: ${safeCoreDownloadRequest.id}")
                 val coreDownloadJobStatus = CoreDownloadJobStatus(
                     job = downloadServiceScope.launch { safeCoreDownloadRequest.downloadInternal() },
                     downloadRequest = safeCoreDownloadRequest,
@@ -73,7 +70,7 @@ class CoreDownloadService : Service() {
                     notificationId = safeCoreDownloadRequest.id
                 )
                 allDownloadsJobStatuses.add(coreDownloadJobStatus)
-                updateNotification(coreDownloadJobStatus)
+                handleNotificationUpdates(coreDownloadJobStatus)
             } catch (e: MimeTypeNotDetermined) {
                 logDebug(e.message)
             }
@@ -84,9 +81,25 @@ class CoreDownloadService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    private fun handleNotificationActions(action: String, downloadId: Int) {
 
-    private fun updateNotification(downloadJobStatus: CoreDownloadJobStatus) {
+        when (action) {
+            START_DOWNLOAD_ACTION -> {
 
+            }
+            STOP_DOWNLOAD_ACTION -> {
+
+            }
+            PAUSE_DOWNLOAD_ACTION -> {
+
+            }
+            RESUME_DOWNLOAD_ACTION -> {
+
+            }
+        }
+    }
+
+    private fun handleNotificationUpdates(downloadJobStatus: CoreDownloadJobStatus) {
         val notification = when(downloadJobStatus.downloadState) {
             DownloadState.Start -> {
                 NotificationUtils.getDownloadStartNotification(this, downloadJobStatus.downloadRequest)

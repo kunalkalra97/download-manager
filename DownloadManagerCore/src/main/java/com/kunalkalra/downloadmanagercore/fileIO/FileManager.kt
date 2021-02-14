@@ -27,6 +27,16 @@ class FileManager: IFileOperations {
         }
     }
 
+    override fun doesFileExist(filePath: String): Boolean {
+        val file = File(filePath)
+        return try {
+            file.exists()
+        } catch (e: SecurityException) {
+            logException(e)
+            false
+        }
+    }
+
     override suspend fun writeToFile(file: File, body: ResponseBody?) {
         withIOContext {
             try {
@@ -41,6 +51,18 @@ class FileManager: IFileOperations {
             } catch (e: IOException) {
                 logException(e)
             }
+        }
+    }
+
+    override fun deleteFile(filePath: String): Boolean {
+        val fileToDelete = File(filePath)
+        return try {
+            when(doesFileExist(filePath)) {
+                true -> fileToDelete.delete()
+                else -> false
+            }
+        } catch (e: SecurityException) {
+            false
         }
     }
 }

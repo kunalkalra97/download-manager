@@ -11,9 +11,8 @@ import com.kunalkalra.downloadmanagercore.Actions
 import com.kunalkalra.downloadmanagercore.NotificationConstants.DEFAULT_NOTIFICATION_CHANNEL_DESCRIPTION
 import com.kunalkalra.downloadmanagercore.NotificationConstants.DEFAULT_NOTIFICATION_CHANNEL_ID
 import com.kunalkalra.downloadmanagercore.NotificationConstants.DEFAULT_NOTIFICATION_CHANNEL_NAME
-import com.kunalkalra.downloadmanagercore.NotificationConstants.NOTIFICATION_ID
+import com.kunalkalra.downloadmanagercore.NotificationConstants.DOWNLOAD_ID
 import com.kunalkalra.downloadmanagercore.R
-import com.kunalkalra.downloadmanagercore.downloadManager.DownloadState
 import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadRequest
 import kotlin.random.Random
 
@@ -118,7 +117,7 @@ object NotificationUtils {
             is NotificationAction.ActionPause -> {
                 Intent(Actions.PAUSE_DOWNLOAD_ACTION)
             }
-        }.putExtra(NOTIFICATION_ID, notificationAction.notificationID)
+        }.putExtra(DOWNLOAD_ID, notificationAction.notificationID)
         return PendingIntent.getBroadcast(context, Random.nextInt(), intent, 0)
     }
 

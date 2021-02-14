@@ -7,6 +7,9 @@ interface IFileOperations {
 
     suspend fun createFile(path: String): File?
 
+    fun doesFileExist(filePath: String): Boolean
+
     suspend fun writeToFile(file: File, body: ResponseBody?)
 
+    fun deleteFile(filePath: String): Boolean
 }

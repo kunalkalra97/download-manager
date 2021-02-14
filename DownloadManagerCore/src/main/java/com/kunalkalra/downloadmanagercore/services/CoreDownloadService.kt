@@ -155,10 +155,11 @@ class CoreDownloadService : Service() {
                         else -> {
                             this.updateCompleteFilePathWithMimeType(mimeType)
                             val completePath = this.completeFilePath
-                            completePath?.let { safeComipletePath ->
+                            completePath?.let { safeCompletePath ->
                                 val file = fileManager.createFile(safeCompletePath)
                                 file?.let { safeFile ->
                                     fileManager.writeToFile(safeFile, safeResponse.body)
+                                    updateDownloadState(this.id, DownloadState.Stop)
                                 }
                             }
                         }
@@ -171,5 +172,13 @@ class CoreDownloadService : Service() {
             }
         }
 
+    }
+
+    private fun updateDownloadState(downloadID: Int, downloadState: DownloadState) {
+        allDownloadsJobStatuses[downloadID].apply {
+            this?.let {
+                this.downloadState = downloadState
+            }
+        }
     }
 }

@@ -48,6 +48,18 @@ object NotificationUtils {
             .build()
     }
 
+    fun getDownloadStoppedNotification(
+        context: Context,
+        coreDownloadRequest: CoreDownloadRequest
+    ): Notification {
+        return NotificationCompat.Builder(context, DEFAULT_NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_download)
+            .setContentTitle(coreDownloadRequest.fileName)
+            .setContentText(context.getString(R.string.label_download_stopped))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+    }
+
     fun registerNotificationChannel(
         context: Context,
         channelName: String = DEFAULT_NOTIFICATION_CHANNEL_NAME,

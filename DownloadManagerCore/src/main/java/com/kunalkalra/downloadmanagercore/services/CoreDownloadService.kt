@@ -34,12 +34,11 @@ class CoreDownloadService : Service() {
     private val networkManager by lazy { OkHttpsNetworkManager() }
     private val fileManager by lazy { FileManager() }
 
-    private var allDownloadsJobStatuses = mutableListOf<CoreDownloadJobStatus>()
+    private var allDownloadsJobStatuses = hashMapOf<Int, CoreDownloadJobStatus>()
 
     private val actionBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            logDebug(intent?.action)
-            logDebug(intent?.getIntExtra(DOWNLOAD_ID, 0)?.toString())
+            handleActions(intent?.action, intent?.getIntExtra(DOWNLOAD_ID, 0))
         }
     }
 
@@ -69,7 +68,8 @@ class CoreDownloadService : Service() {
                     downloadState = DownloadState.Start,
                     notificationId = safeCoreDownloadRequest.id
                 )
-                allDownloadsJobStatuses.add(coreDownloadJobStatus)
+                allDownloadsJobStatuses[coreDownloadJobStatus.notificationId] =
+                    coreDownloadJobStatus
                 handleNotificationUpdates(coreDownloadJobStatus)
             } catch (e: MimeTypeNotDetermined) {
                 logDebug(e.message)
@@ -81,14 +81,27 @@ class CoreDownloadService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private fun handleNotificationActions(action: String, downloadId: Int) {
+    private fun handleActions(action: String?, downloadId: Int?) {
 
         when (action) {
             START_DOWNLOAD_ACTION -> {
 
             }
             STOP_DOWNLOAD_ACTION -> {
+                val downloadStatus = allDownloadsJobStatuses[downloadId]
+                downloadStatus?.let { safeDownloadStatus ->
+                    val downloadJob = safeDownloadStatus.job
+                    val downloadPath = safeDownloadStatus.downloadRequest.completeFilePath
+                    downloadJob.cancel()
+                    downloadPath?.let { safeDownloadPath ->
+                        fileManager.deleteFile(safeDownloadPath)
+                        logDebug("File Successfully removed")
+                    }
 
+                    handleNotificationUpdates(safeDownloadStatus.apply {
+                        downloadState = DownloadState.Stop
+                    })
+                }
             }
             PAUSE_DOWNLOAD_ACTION -> {
 
@@ -100,14 +113,27 @@ class CoreDownloadService : Service() {
     }
 
     private fun handleNotificationUpdates(downloadJobStatus: CoreDownloadJobStatus) {
-        val notification = when(downloadJobStatus.downloadState) {
+        val notification = when (downloadJobStatus.downloadState) {
             DownloadState.Start -> {
-                NotificationUtils.getDownloadStartNotification(this, downloadJobStatus.downloadRequest)
+                NotificationUtils.getDownloadStartNotification(
+                    this,
+                    downloadJobStatus.downloadRequest
+                )
+            }
+
+            DownloadState.Stop -> {
+                NotificationUtils.getDownloadStoppedNotification(
+                    this,
+                    downloadJobStatus.downloadRequest
+                )
             }
 
             else -> {
                 // Todo("Create other states")
-                NotificationUtils.getDownloadStartNotification(this, downloadJobStatus.downloadRequest)
+                NotificationUtils.getDownloadStartNotification(
+                    this,
+                    downloadJobStatus.downloadRequest
+                )
             }
         }
         NotificationManagerCompat.from(this).notify(downloadJobStatus.notificationId, notification)
@@ -124,10 +150,13 @@ class CoreDownloadService : Service() {
                     when (val mimeType = MimeUtils.getExtensionFromResponse(safeResponse)) {
                         null -> throw MimeTypeNotDetermined()
                         else -> {
-                            val completePath = this@downloadInternal.getCompleteFilePath(mimeType)
-                            val file = fileManager.createFile(completePath)
-                            file?.let { safeFile ->
-                                fileManager.writeToFile(safeFile, safeResponse.body)
+                            this.updateCompleteFilePathWithMimeType(mimeType)
+                            val completePath = this.completeFilePath
+                            completePath?.let { safeCompletePath ->
+                                val file = fileManager.createFile(safeCompletePath)
+                                file?.let { safeFile ->
+                                    fileManager.writeToFile(safeFile, safeResponse.body)
+                                }
                             }
                         }
                     }

@@ -26,6 +26,7 @@ import com.kunalkalra.downloadmanagercore.utils.logDebug
 import kotlinx.coroutines.*
 import okhttp3.*
 import java.util.concurrent.CancellationException
+import kotlin.jvm.Throws
 
 class CoreDownloadService : Service() {
 
@@ -60,17 +61,17 @@ class CoreDownloadService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let { safeIntent ->
             val coreDownloadRequest =
-                safeIntent.getParcelableExtra<CoreDownloadRequest>(IntentConstants.INTENT_DOWNLOAD)
+                    safeIntent.getParcelableExtra<CoreDownloadRequest>(IntentConstants.INTENT_DOWNLOAD)
             coreDownloadRequest?.let { safeCoreDownloadRequest ->
                 try {
                     val coreDownloadJobStatus = CoreDownloadJobStatus(
-                        job = downloadServiceScope.launch { safeCoreDownloadRequest.downloadInternal() },
-                        downloadRequest = safeCoreDownloadRequest,
-                        downloadState = DownloadState.Start,
-                        notificationId = safeCoreDownloadRequest.id
+                            job = downloadServiceScope.launch { safeCoreDownloadRequest.downloadInternal() },
+                            downloadRequest = safeCoreDownloadRequest,
+                            downloadState = DownloadState.Start,
+                            notificationId = safeCoreDownloadRequest.id
                     )
                     allDownloadsJobStatuses[coreDownloadJobStatus.notificationId] =
-                        coreDownloadJobStatus
+                            coreDownloadJobStatus
                     handleNotificationUpdates(coreDownloadJobStatus)
                 } catch (e: MimeTypeNotDetermined) {
                     logDebug(e.message)
@@ -119,23 +120,23 @@ class CoreDownloadService : Service() {
         val notification = when (downloadJobStatus.downloadState) {
             DownloadState.Start -> {
                 NotificationUtils.getDownloadStartNotification(
-                    this,
-                    downloadJobStatus.downloadRequest
+                        this,
+                        downloadJobStatus.downloadRequest
                 )
             }
 
             DownloadState.Stop -> {
                 NotificationUtils.getDownloadStoppedNotification(
-                    this,
-                    downloadJobStatus.downloadRequest
+                        this,
+                        downloadJobStatus.downloadRequest
                 )
             }
 
             else -> {
                 // Todo("Create other states")
                 NotificationUtils.getDownloadStartNotification(
-                    this,
-                    downloadJobStatus.downloadRequest
+                        this,
+                        downloadJobStatus.downloadRequest
                 )
             }
         }
@@ -145,22 +146,19 @@ class CoreDownloadService : Service() {
     @Throws(MimeTypeNotDetermined::class)
     private suspend fun CoreDownloadRequest.downloadInternal() {
         val request = Request.Builder()
-            .url(url)
-            .build()
+                .url(url)
+                .build()
         when (val response = networkManager.requestResource(request = request)) {
             is SafeResult.Success -> {
                 response.data?.let { safeResponse ->
                     when (val mimeType = MimeUtils.getExtensionFromResponse(safeResponse)) {
                         null -> throw MimeTypeNotDetermined()
                         else -> {
-                            this.updateCompleteFilePathWithMimeType(mimeType)
-                            val completePath = this.completeFilePath
-                            completePath?.let { safeCompletePath ->
-                                val file = fileManager.createFile(safeCompletePath)
-                                file?.let { safeFile ->
-                                    fileManager.writeToFile(safeFile, safeResponse.body)
-                                    updateDownloadState(this.id, DownloadState.Stop)
-                                }
+                            val completePath = this.updateCompleteFilePathWithMimeType(mimeType)
+                            val file = fileManager.createFile(completePath)
+                            file?.let { safeFile ->
+                                fileManager.writeToFileInChunks(safeFile, safeResponse.body, 500000)
+                                updateDownloadState(this.id, DownloadState.Stop)
                             }
                         }
                     }

@@ -5,7 +5,8 @@ package com.kunalkalra.downloadmanagercore.downloadManager
  * Start- The download job has started
  * Pause- The download job has been paused
  * Resume- The download job has been resumed from a paused state
- * Stop- The download job has been cancelled/completed
+ * Stop- The download job has been cancelled
+ * Complete- The download job has completed corresponding download
  */
 
 sealed class DownloadState {
@@ -13,4 +14,5 @@ sealed class DownloadState {
     object Pause: DownloadState()
     object Resume: DownloadState()
     object Stop: DownloadState()
+    object Complete: DownloadState()
 }

@@ -10,16 +10,23 @@ import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadReq
 class MainActivity : AppCompatActivity() {
 
     private lateinit var coreDownloadManager: CoreDownloadManager
+    private val charPool : List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val download = findViewById<TextView>(R.id.btnDownload)
         coreDownloadManager = CoreDownloadManager(applicationContext)
+        val randomString = (1..6)
+                .map { _ -> kotlin.random.Random.nextInt(0, charPool.size) }
+                .map(charPool::get)
+                .joinToString("");
+
         download.setOnClickListener {
             coreDownloadManager.download(
                 CoreDownloadRequest(
-                    url = "https://filesamples.com/samples/video/mp4/sample_1920x1080.mp4",
-                    fileName = "bizbizcat",
+                    url = "https://file-examples-com.github.io/uploads/2017/10/file_example_JPG_2500kB.jpg",
+                    fileName = randomString,
                 )
             )
         }

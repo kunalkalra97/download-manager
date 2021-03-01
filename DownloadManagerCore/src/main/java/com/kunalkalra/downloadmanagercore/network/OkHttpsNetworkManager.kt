@@ -17,7 +17,7 @@ class OkHttpsNetworkManager: INetworkOperations<Request, Response> {
 
     override suspend fun requestResource(coroutineContext: CoroutineContext, request: Request): SafeResult<Response> {
         return withContext(coroutineContext) {
-            suspendCancellableCoroutine { cancellableContinuation ->
+            suspendCancellableCoroutine<SafeResult<Response>> { cancellableContinuation ->
                 okHttpClient.newCall(request).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
                         logException(e)

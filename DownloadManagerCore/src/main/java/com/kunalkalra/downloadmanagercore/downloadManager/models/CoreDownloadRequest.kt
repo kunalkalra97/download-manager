@@ -14,9 +14,9 @@ data class CoreDownloadRequest(
     val id: Int = Random.nextInt(),
     var completeFilePath: String? = null
 ): Parcelable {
-
-    fun updateCompleteFilePathWithMimeType(mimeTypeExtension: String) {
+    fun updateCompleteFilePathWithMimeType(mimeTypeExtension: String): String {
         val destinationDirectoryPath = Environment.getExternalStoragePublicDirectory(destinationDirectory).path
         completeFilePath = "$destinationDirectoryPath/$fileName.$mimeTypeExtension"
+        return "$destinationDirectoryPath/$fileName.$mimeTypeExtension"
     }
 }

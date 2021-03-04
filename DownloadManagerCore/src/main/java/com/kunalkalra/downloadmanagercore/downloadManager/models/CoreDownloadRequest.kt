@@ -5,7 +5,6 @@ import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize
 import kotlin.random.Random
 
-@Suppress("DEPRECATION")
 @Parcelize
 data class CoreDownloadRequest(
     val url: String,

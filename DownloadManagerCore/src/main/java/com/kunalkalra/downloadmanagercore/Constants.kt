@@ -29,3 +29,8 @@ object Actions {
     const val RESUME_DOWNLOAD_ACTION = "com.kunalkalra.downloadmanagercore.resume_action"
     const val STOP_DOWNLOAD_ACTION = "com.kunalkalra.downloadmanagercore.stop_action"
 }
+
+object FileConstants {
+    const val DEFAULT_BUFFER_SIZE = 8192L
+    const val CUSTOM_BUFFER_SIZE = 20480L
+}

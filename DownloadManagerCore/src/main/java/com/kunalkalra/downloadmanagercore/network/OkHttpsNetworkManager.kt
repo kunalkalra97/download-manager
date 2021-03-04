@@ -27,6 +27,7 @@ class OkHttpsNetworkManager: INetworkOperations<Request, Response> {
                     override fun onResponse(call: Call, response: Response) {
                         cancellableContinuation.resume(SafeResult.Success(response))
                     }
+
                 })
             }
         }

@@ -157,7 +157,7 @@ class CoreDownloadService : Service() {
                             val completePath = this.updateCompleteFilePathWithMimeType(mimeType)
                             val file = fileManager.createFile(completePath)
                             file?.let { safeFile ->
-                                fileManager.writeToFileInChunks(safeFile, safeResponse.body, 500000)
+                                fileManager.writeToFileInChunks(safeFile, safeResponse.body, 50000)
                                 updateDownloadState(this.id, DownloadState.Stop)
                             }
                         }

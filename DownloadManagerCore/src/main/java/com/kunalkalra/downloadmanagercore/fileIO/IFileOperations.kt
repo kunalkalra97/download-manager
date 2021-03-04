@@ -11,7 +11,7 @@ interface IFileOperations {
 
     suspend fun writeToFile(file: File, body: ResponseBody?)
 
-    suspend fun writeToFileInChunks(file: File, body: ResponseBody?, chunkSize: Int)
+    suspend fun writeToFileInChunks(file: File, body: ResponseBody?, chunkSize: Long)
 
     fun deleteFile(filePath: String): Boolean
 }

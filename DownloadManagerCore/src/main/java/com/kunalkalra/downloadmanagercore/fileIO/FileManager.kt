@@ -1,11 +1,12 @@
 package com.kunalkalra.downloadmanagercore.fileIO
 
+import androidx.annotation.IntRange
+import com.kunalkalra.downloadmanagercore.FileConstants
 import com.kunalkalra.downloadmanagercore.utils.logException
 import com.kunalkalra.downloadmanagercore.utils.withIOContext
 import okhttp3.ResponseBody
 import okio.*
 import java.io.File
-import java.lang.Long.min
 
 class FileManager: IFileOperations {
 
@@ -54,20 +55,26 @@ class FileManager: IFileOperations {
         }
     }
 
-    override suspend fun writeToFileInChunks(file: File, body: ResponseBody?, chunkSize: Int) {
+    override suspend fun writeToFileInChunks(
+        file: File,
+        body: ResponseBody?,
+        @IntRange(
+            from = 1L,
+            to = FileConstants.DEFAULT_BUFFER_SIZE
+        ) chunkSize: Long
+    ) {
         withIOContext {
             try {
-                val sink = file.sink().buffer()
+                val sink = file.appendingSink().buffer()
+                val buffer = Buffer()
                 body?.let { safeResponseBody ->
-                    val source = safeResponseBody.source().readByteArray()
-                    var remainingContentLength = safeResponseBody.contentLength()
-                    var offset = 0
-                    while(chunkSize < remainingContentLength) {
-                        sink.write(source, offset, chunkSize)
-                        offset += chunkSize + 1
-                        remainingContentLength -= chunkSize
+                    val source = safeResponseBody.source()
+                    var bytesRead = source.read(buffer, chunkSize)
+                    while (bytesRead != -1L) {
+                        sink.write(buffer, buffer.size)
+                        bytesRead = source.read(buffer, chunkSize)
                     }
-                    sink.write(source, offset, body.contentLength().toInt())
+                    sink.close()
                 }
             } catch (e: FileNotFoundException) {
                 logException(e)
@@ -78,7 +85,6 @@ class FileManager: IFileOperations {
             }
         }
     }
-
     override fun deleteFile(filePath: String): Boolean {
         val fileToDelete = File(filePath)
         return try {

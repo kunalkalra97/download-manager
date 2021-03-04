@@ -5,7 +5,7 @@ import java.io.File
 
 interface IFileOperations {
 
-    suspend fun createFile(path: String): File?
+    suspend fun createFile(filePath: String): File?
 
     fun doesFileExist(filePath: String): Boolean
 

@@ -10,12 +10,13 @@ import java.io.File
 
 class FileManager: IFileOperations {
 
-    override suspend fun createFile(path: String): File? {
+    override suspend fun createFile(filePath: String): File? {
         return withIOContext {
-            val file = File(path)
+            val file = File(filePath)
             try {
-                file.createNewFile()
-                file
+                file.apply {
+                    createNewFile()
+                }
             } catch (e: IOException) {
                 logException(e)
                 null

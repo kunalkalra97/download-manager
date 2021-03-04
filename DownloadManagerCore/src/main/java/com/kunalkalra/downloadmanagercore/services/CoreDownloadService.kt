@@ -20,11 +20,15 @@ import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadJob
 import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadRequest
 import com.kunalkalra.downloadmanagercore.network.OkHttpsNetworkManager
 import com.kunalkalra.downloadmanagercore.network.models.SafeResult
+import com.kunalkalra.downloadmanagercore.usecases.fileIOUseCases.UseCaseDeleteFile
+import com.kunalkalra.downloadmanagercore.usecases.fileIOUseCases.UseCaseWriteToFile
+import com.kunalkalra.downloadmanagercore.usecases.networkUseCases.UseCaseRequestResource
 import com.kunalkalra.downloadmanagercore.utils.MimeUtils
 import com.kunalkalra.downloadmanagercore.utils.NotificationUtils
 import com.kunalkalra.downloadmanagercore.utils.logDebug
 import kotlinx.coroutines.*
 import okhttp3.*
+import okio.IOException
 import java.util.concurrent.CancellationException
 import kotlin.jvm.Throws
 
@@ -34,6 +38,9 @@ class CoreDownloadService : Service() {
 
     private val networkManager by lazy { OkHttpsNetworkManager() }
     private val fileManager by lazy { FileManager() }
+    private val useCaseWriteToFile = UseCaseWriteToFile(fileManager)
+    private val useCaseDeleteFile = UseCaseDeleteFile(fileManager)
+    private val useCaseRequestResource = UseCaseRequestResource(networkManager)
 
     private var allDownloadsJobStatuses = hashMapOf<Int, CoreDownloadJobStatus>()
 
@@ -98,8 +105,7 @@ class CoreDownloadService : Service() {
                     val downloadPath = safeDownloadStatus.downloadRequest.completeFilePath
                     downloadJob.cancel()
                     downloadPath?.let { safeDownloadPath ->
-                        fileManager.deleteFile(safeDownloadPath)
-                        logDebug("File Successfully removed")
+                        useCaseDeleteFile.performOperation(safeDownloadPath)
                     }
 
                     handleNotificationUpdates(safeDownloadStatus.apply {
@@ -146,30 +152,25 @@ class CoreDownloadService : Service() {
     @Throws(MimeTypeNotDetermined::class)
     private suspend fun CoreDownloadRequest.downloadInternal() {
         val request = Request.Builder()
-                .url(url)
-                .build()
-        when (val response = networkManager.requestResource(request = request)) {
-            is SafeResult.Success -> {
-                response.data?.let { safeResponse ->
-                    when (val mimeType = MimeUtils.getExtensionFromResponse(safeResponse)) {
-                        null -> throw MimeTypeNotDetermined()
-                        else -> {
-                            val completePath = this.updateCompleteFilePathWithMimeType(mimeType)
-                            val file = fileManager.createFile(completePath)
-                            file?.let { safeFile ->
-                                fileManager.writeToFileInChunks(safeFile, safeResponse.body, 50000)
-                                updateDownloadState(this.id, DownloadState.Stop)
-                            }
-                        }
-                    }
+            .url(url)
+            .build()
+
+        val response = useCaseRequestResource.performOperation(request)
+        response?.let {
+            when (val mimeType = MimeUtils.getExtensionFromResponse(response)) {
+                null -> throw MimeTypeNotDetermined()
+                else -> {
+                    val completePath = this.updateCompleteFilePathWithMimeType(mimeType)
+                    useCaseWriteToFile.performOperation(
+                        UseCaseWriteToFile.getFileWriteParams(
+                            completePath,
+                            response.body
+                        )
+                    )
+                    updateDownloadState(this.id, DownloadState.Stop)
                 }
             }
-
-            is SafeResult.Failure -> {
-                logDebug("Could not fetch Resource from remote")
-            }
         }
-
     }
 
     private fun updateDownloadState(downloadID: Int, downloadState: DownloadState) {

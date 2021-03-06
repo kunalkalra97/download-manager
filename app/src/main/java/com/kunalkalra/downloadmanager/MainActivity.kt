@@ -17,12 +17,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val download = findViewById<TextView>(R.id.btnDownload)
         coreDownloadManager = CoreDownloadManager(applicationContext)
-        val randomString = (1..6)
+
+        download.setOnClickListener {
+            val randomString = (1..6)
                 .map { _ -> kotlin.random.Random.nextInt(0, charPool.size) }
                 .map(charPool::get)
                 .joinToString("");
-
-        download.setOnClickListener {
             coreDownloadManager.download(
                 CoreDownloadRequest(
                     url = "https://file-examples-com.github.io/uploads/2017/10/file_example_JPG_2500kB.jpg",

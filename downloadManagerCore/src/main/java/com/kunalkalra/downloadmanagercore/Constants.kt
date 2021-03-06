@@ -1,5 +1,7 @@
 package com.kunalkalra.downloadmanagercore
 
+import com.kunalkalra.downloadmanagercore.downloadManager.DownloadState
+
 object HeaderConstants {
     const val USER_AGENT = "USER_AGENT"
     const val REFERRER = "referrer"
@@ -33,4 +35,13 @@ object Actions {
 object FileConstants {
     const val DEFAULT_BUFFER_SIZE = 8192L
     const val CUSTOM_BUFFER_SIZE = 20480L
+}
+
+object StateStrings {
+    const val start = "start"
+    const val pause = "pause"
+    const val resume ="resume"
+    const val stop = "stop"
+    const val complete = "complete"
+    const val undetermined = "undetermined"
 }

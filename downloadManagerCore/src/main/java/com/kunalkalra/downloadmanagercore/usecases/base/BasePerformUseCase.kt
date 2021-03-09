@@ -6,6 +6,6 @@ package com.kunalkalra.downloadmanagercore.usecases.base
  * @param Result Output Type
  */
 
-abstract class BaseUseCase<in Param, out Result> {
+abstract class BasePerformUseCase<in Param, out Result> {
     abstract fun performOperation(param: Param): Result
 }

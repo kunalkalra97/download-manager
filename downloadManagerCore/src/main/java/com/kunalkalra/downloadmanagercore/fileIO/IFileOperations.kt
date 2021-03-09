@@ -5,13 +5,15 @@ import java.io.File
 
 interface IFileOperations {
 
-    suspend fun createFile(filePath: String): File?
-
     fun doesFileExist(filePath: String): Boolean
+
+    fun deleteFile(filePath: String): Boolean
+
+    suspend fun createFile(filePath: String): File?
 
     suspend fun writeToFile(file: File, body: ResponseBody?)
 
     suspend fun writeToFileInChunks(file: File, body: ResponseBody?, chunkSize: Long)
 
-    fun deleteFile(filePath: String): Boolean
+    suspend fun writeToFileInChunksWithSeek(file: File, body: ResponseBody?, chunkSize: Long, seek: Long)
 }

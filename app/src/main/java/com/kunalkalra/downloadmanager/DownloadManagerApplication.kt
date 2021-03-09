@@ -6,7 +6,6 @@ import timber.log.Timber
 import timber.log.Timber.DebugTree
 
 
-@HiltAndroidApp
 class DownloadManagerApplication: Application() {
     override fun onCreate() {
         super.onCreate()

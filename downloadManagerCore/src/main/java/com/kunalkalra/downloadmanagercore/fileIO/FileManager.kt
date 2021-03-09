@@ -8,7 +8,30 @@ import okhttp3.ResponseBody
 import okio.*
 import java.io.File
 
-class FileManager: IFileOperations {
+class FileManager : IFileOperations {
+
+    override fun deleteFile(filePath: String): Boolean {
+        val fileToDelete = File(filePath)
+        return try {
+            when (doesFileExist(filePath)) {
+                true -> fileToDelete.delete()
+                else -> false
+            }
+        } catch (e: SecurityException) {
+            false
+        }
+    }
+
+
+    override fun doesFileExist(filePath: String): Boolean {
+        val file = File(filePath)
+        return try {
+            file.exists()
+        } catch (e: SecurityException) {
+            logException(e)
+            false
+        }
+    }
 
     override suspend fun createFile(filePath: String): File? {
         return withIOContext {
@@ -24,16 +47,6 @@ class FileManager: IFileOperations {
                 logException(e)
                 null
             }
-        }
-    }
-
-    override fun doesFileExist(filePath: String): Boolean {
-        val file = File(filePath)
-        return try {
-            file.exists()
-        } catch (e: SecurityException) {
-            logException(e)
-            false
         }
     }
 
@@ -64,37 +77,60 @@ class FileManager: IFileOperations {
             to = FileConstants.DEFAULT_BUFFER_SIZE
         ) chunkSize: Long
     ) {
-        withIOContext {
-            try {
-                val sink = file.appendingSink().buffer()
-                val buffer = Buffer()
-                body?.let { safeResponseBody ->
-                    val source = safeResponseBody.source()
-                    var bytesRead = source.read(buffer, chunkSize)
-                    while (bytesRead != -1L) {
-                        sink.write(buffer, buffer.size)
-                        bytesRead = source.read(buffer, chunkSize)
-                    }
-                    sink.close()
-                }
-            } catch (e: FileNotFoundException) {
-                logException(e)
-            } catch (e: IOException) {
-                logException(e)
-            } finally {
-                body?.close()
+        try {
+            val sink = file.appendingSink().buffer()
+            body?.let { safeResponseBody ->
+                val source = safeResponseBody.source()
+                writeToFileInChunksInternal(sink, source, chunkSize)
             }
+        } catch (e: FileNotFoundException) {
+            logException(e)
+        } catch (e: IOException) {
+            logException(e)
+        } finally {
+            body?.close()
         }
     }
-    override fun deleteFile(filePath: String): Boolean {
-        val fileToDelete = File(filePath)
-        return try {
-            when(doesFileExist(filePath)) {
-                true -> fileToDelete.delete()
-                else -> false
+
+    override suspend fun writeToFileInChunksWithSeek(
+        file: File,
+        body: ResponseBody?,
+        @IntRange(
+            from = 1L,
+            to = FileConstants.DEFAULT_BUFFER_SIZE
+        ) chunkSize: Long,
+        seek: Long
+    ) {
+        try {
+            val sink = file.appendingSink().buffer()
+            body?.let { safeResponseBody ->
+                val source = safeResponseBody.source().apply {
+                    skip(seek)
+                }
+                writeToFileInChunksInternal(sink, source, chunkSize)
             }
-        } catch (e: SecurityException) {
-            false
+        } catch (e: FileNotFoundException) {
+            logException(e)
+        } catch (e: IOException) {
+            logException(e)
+        } finally {
+            body?.close()
+        }
+    }
+
+    private suspend fun writeToFileInChunksInternal(
+        sink: BufferedSink,
+        source: BufferedSource,
+        chunkSize: Long
+    ) {
+        withIOContext {
+            val buffer = Buffer()
+            var bytesRead = source.read(buffer, chunkSize)
+            while (bytesRead != -1L) {
+                sink.write(buffer, buffer.size)
+                bytesRead = source.read(buffer, chunkSize)
+            }
+            sink.close()
         }
     }
 }

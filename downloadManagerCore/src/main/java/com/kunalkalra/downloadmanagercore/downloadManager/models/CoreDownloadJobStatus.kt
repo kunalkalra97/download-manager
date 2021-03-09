@@ -7,5 +7,5 @@ data class CoreDownloadJobStatus(
     var job: Job,
     var downloadRequest: CoreDownloadRequest,
     var downloadState: DownloadState,
-    var notificationId: Int,
+    var bytesTransferred: Long = 0
 )

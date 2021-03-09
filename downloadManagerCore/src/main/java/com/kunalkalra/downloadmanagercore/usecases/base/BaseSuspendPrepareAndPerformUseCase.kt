@@ -6,6 +6,6 @@ package com.kunalkalra.downloadmanagercore.usecases.base
  * @param Result Output Type
  */
 
-abstract class BaseSuspendUseCase<in Param, out Result> {
-    abstract suspend fun performOperation(param: Param): Result
+abstract class BaseSuspendPrepareAndPerformUseCase<in PrepareParams, in Param, out Result>: BaseSuspendPerformUseCase<Param, Result>() {
+    abstract suspend fun prepare(prepareParams: PrepareParams)
 }

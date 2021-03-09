@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.core.app.NotificationCompat
 import com.kunalkalra.downloadmanagercore.Actions
 import com.kunalkalra.downloadmanagercore.NotificationConstants.DEFAULT_NOTIFICATION_CHANNEL_DESCRIPTION
@@ -14,6 +15,7 @@ import com.kunalkalra.downloadmanagercore.NotificationConstants.DEFAULT_NOTIFICA
 import com.kunalkalra.downloadmanagercore.NotificationConstants.DOWNLOAD_ID
 import com.kunalkalra.downloadmanagercore.R
 import com.kunalkalra.downloadmanagercore.downloadManager.models.CoreDownloadRequest
+import java.io.File
 import kotlin.random.Random
 
 object NotificationUtils {
@@ -26,12 +28,7 @@ object NotificationUtils {
             .setSmallIcon(R.drawable.ic_download)
             .setContentTitle(coreDownloadRequest.fileName)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .addAction(
-                getActionFor(
-                    NotificationAction.ActionPause(coreDownloadRequest.id),
-                    context
-                )
-            )
+            .addAction(getActionFor(NotificationAction.ActionPause(coreDownloadRequest.id), context))
             .addAction(getActionFor(NotificationAction.ActionStop(coreDownloadRequest.id), context))
             .build()
     }
@@ -40,11 +37,32 @@ object NotificationUtils {
         context: Context,
         coreDownloadRequest: CoreDownloadRequest
     ): Notification {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            type = coreDownloadRequest.mimeType
+        }
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(context, 0, intent, 0)
         return NotificationCompat.Builder(context, DEFAULT_NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_download)
             .setContentTitle(coreDownloadRequest.fileName)
             .setContentText(context.getString(R.string.label_download_complete))
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+    }
+
+    fun getDownloadPausedNotification(
+        context: Context,
+        coreDownloadRequest: CoreDownloadRequest
+    ): Notification {
+        return NotificationCompat.Builder(context, DEFAULT_NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_download)
+            .setContentTitle(coreDownloadRequest.fileName)
+            .setContentText(context.getString(R.string.label_download_paused))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .addAction(getActionFor(NotificationAction.ActionResume(coreDownloadRequest.id), context))
+            .addAction(getActionFor(NotificationAction.ActionStop(coreDownloadRequest.id), context))
             .build()
     }
 
@@ -90,7 +108,7 @@ object NotificationUtils {
                 NotificationCompat.Action.Builder(
                     R.drawable.ic_play,
                     context.getString(R.string.label_resume),
-                    getPendingIntent(notificationAction, context)
+                    getPendingIntentForNotificationAction(notificationAction, context)
                 ).build()
             }
 
@@ -98,7 +116,7 @@ object NotificationUtils {
                 NotificationCompat.Action.Builder(
                     R.drawable.ic_pause,
                     context.getString(R.string.label_pause),
-                    getPendingIntent(notificationAction, context)
+                    getPendingIntentForNotificationAction(notificationAction, context)
                 ).build()
             }
 
@@ -106,14 +124,16 @@ object NotificationUtils {
                 NotificationCompat.Action.Builder(
                     R.drawable.ic_stop,
                     context.getString(R.string.label_cancel),
-                    getPendingIntent(notificationAction, context)
+                    getPendingIntentForNotificationAction(notificationAction, context)
                 ).build()
             }
         }
 
     }
 
-    private fun getPendingIntent(
+
+
+    private fun getPendingIntentForNotificationAction(
         notificationAction: NotificationAction,
         context: Context
     ): PendingIntent {

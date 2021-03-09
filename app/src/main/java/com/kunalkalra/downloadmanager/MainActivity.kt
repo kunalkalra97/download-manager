@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
                 .joinToString("");
             coreDownloadManager.download(
                 CoreDownloadRequest(
-                    url = "https://file-examples-com.github.io/uploads/2017/10/file_example_JPG_2500kB.jpg",
+                    url = "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_1920_18MG.mp4",
                     fileName = randomString,
                 )
             )

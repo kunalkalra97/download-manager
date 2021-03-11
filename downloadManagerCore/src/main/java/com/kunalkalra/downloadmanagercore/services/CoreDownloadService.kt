@@ -11,6 +11,7 @@ import com.kunalkalra.downloadmanagercore.Actions.PAUSE_DOWNLOAD_ACTION
 import com.kunalkalra.downloadmanagercore.Actions.RESUME_DOWNLOAD_ACTION
 import com.kunalkalra.downloadmanagercore.Actions.START_DOWNLOAD_ACTION
 import com.kunalkalra.downloadmanagercore.Actions.STOP_DOWNLOAD_ACTION
+import com.kunalkalra.downloadmanagercore.FileConstants
 import com.kunalkalra.downloadmanagercore.IntentConstants
 import com.kunalkalra.downloadmanagercore.NotificationConstants.DOWNLOAD_ID
 import com.kunalkalra.downloadmanagercore.downloadManager.ActionHandler
@@ -25,6 +26,7 @@ import com.kunalkalra.downloadmanagercore.network.OkHttpsNetworkManager
 import com.kunalkalra.downloadmanagercore.usecases.fileIOUseCases.UseCaseDeleteFile
 import com.kunalkalra.downloadmanagercore.usecases.fileIOUseCases.UseCaseWriteToExistingFileInChunks
 import com.kunalkalra.downloadmanagercore.usecases.fileIOUseCases.UseCaseWriteToFile
+import com.kunalkalra.downloadmanagercore.usecases.fileIOUseCases.UseCaseWriteToFileInChunks
 import com.kunalkalra.downloadmanagercore.usecases.networkUseCases.UseCaseRequestResource
 import com.kunalkalra.downloadmanagercore.utils.*
 import kotlinx.coroutines.*
@@ -41,6 +43,7 @@ class CoreDownloadService : Service() {
     private val useCaseWriteToFile = UseCaseWriteToFile(fileManager)
     private val useCaseDeleteFile = UseCaseDeleteFile(fileManager)
     private val useCaseWriteToExistingFileInChunks = UseCaseWriteToExistingFileInChunks(fileManager)
+    private val useCaseWriteToFileInChunks = UseCaseWriteToFileInChunks(fileManager)
     private val useCaseRequestResource = UseCaseRequestResource(networkManager)
 
     private val notificationActionCallbackHandler = ActionHandler(NotificationCallbackHandler())
@@ -108,12 +111,17 @@ class CoreDownloadService : Service() {
                     null -> throw MimeTypeNotDeterminedException()
                     else -> {
                         val completePath = this.getCompleteFilePathWithMimeType(mimeType)
-                        useCaseWriteToFile.performOperation(
-                            UseCaseWriteToFile.getFileWriteParams(
-                                completePath,
-                                response.body
+                        useCaseWriteToFileInChunks.performOperation(
+                            UseCaseWriteToFileInChunks.getFileWriteInChunksParams(
+                                completePath, response.body, FileConstants.DEFAULT_BUFFER_SIZE
                             )
                         )
+//                        useCaseWriteToFile.performOperation(
+//                            UseCaseWriteToFile.getFileWriteParams(
+//                                completePath,
+//                                response.body
+//                            )
+//                        )
                         updateDownloadState(this.id, DownloadState.Complete)
                         handleNotificationUpdates(this.id)
                     }
@@ -235,7 +243,6 @@ class CoreDownloadService : Service() {
         private fun cancelJob(safeDownloadStatus: CoreDownloadJobStatus) {
             val downloadJob = safeDownloadStatus.job
             downloadJob.cancel()
-
         }
 
         private fun deleteFile(safeDownloadStatus: CoreDownloadJobStatus) {

@@ -1,5 +1,6 @@
 package com.kunalkalra.downloadmanagercore.fileIO
 
+import kotlinx.coroutines.flow.Flow
 import okhttp3.ResponseBody
 import java.io.File
 

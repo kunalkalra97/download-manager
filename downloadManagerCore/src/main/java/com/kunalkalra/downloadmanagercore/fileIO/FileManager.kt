@@ -2,11 +2,22 @@ package com.kunalkalra.downloadmanagercore.fileIO
 
 import androidx.annotation.IntRange
 import com.kunalkalra.downloadmanagercore.FileConstants
+import com.kunalkalra.downloadmanagercore.utils.logDebug
 import com.kunalkalra.downloadmanagercore.utils.logException
 import com.kunalkalra.downloadmanagercore.utils.withIOContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
 import okio.*
 import java.io.File
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 class FileManager : IFileOperations {
 
@@ -78,6 +89,7 @@ class FileManager : IFileOperations {
         ) chunkSize: Long
     ) {
         try {
+            logDebug("Content Length: ${body?.contentLength().toString()}")
             val sink = file.appendingSink().buffer()
             body?.let { safeResponseBody ->
                 val source = safeResponseBody.source()
@@ -126,10 +138,18 @@ class FileManager : IFileOperations {
         withIOContext {
             val buffer = Buffer()
             var bytesRead = source.read(buffer, chunkSize)
+            var totalBytesTransferred = bytesRead + 1
             while (bytesRead != -1L) {
-                sink.write(buffer, buffer.size)
-                bytesRead = source.read(buffer, chunkSize)
+                if(coroutineContext.job.isActive) {
+                    sink.write(buffer, buffer.size)
+                    bytesRead = source.read(buffer, chunkSize)
+                    totalBytesTransferred += bytesRead
+                } else {
+                    return@withIOContext
+                    sink.close()
+                }
             }
+            logDebug(totalBytesTransferred.toString())
             sink.close()
         }
     }

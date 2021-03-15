@@ -5,9 +5,11 @@ import com.kunalkalra.downloadmanagercore.BuildConfig
 
 private const val TAG = "kalrk-test"
 
-fun logDebug(message: String?) {
-    if(BuildConfig.DEBUG) {
-        message?.let { Log.d(TAG, it) }
+fun <T> logDebug(message: T?) {
+    if (BuildConfig.DEBUG) {
+        message?.toString()?.let {
+            Log.d(TAG, it)
+        }
     }
 }
 

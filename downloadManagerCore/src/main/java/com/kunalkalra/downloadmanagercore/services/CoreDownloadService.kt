@@ -30,6 +30,7 @@ import com.kunalkalra.downloadmanagercore.usecases.fileIOUseCases.UseCaseWriteTo
 import com.kunalkalra.downloadmanagercore.usecases.networkUseCases.UseCaseRequestResource
 import com.kunalkalra.downloadmanagercore.utils.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 import okhttp3.*
 import java.util.concurrent.CancellationException
 import kotlin.jvm.Throws

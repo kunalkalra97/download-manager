@@ -14,7 +14,7 @@ interface IFileOperations {
 
     suspend fun writeToFile(file: File, body: ResponseBody?)
 
-    suspend fun writeToFileInChunks(file: File, body: ResponseBody?, chunkSize: Long)
+    fun writeToFileInChunks(file: File, body: ResponseBody?, chunkSize: Long): Flow<Long>
 
-    suspend fun writeToFileInChunksWithSeek(file: File, body: ResponseBody?, chunkSize: Long, seek: Long)
+    fun writeToFileInChunksWithSeek(file: File, body: ResponseBody?, chunkSize: Long, seek: Long): Flow<Long>
 }
